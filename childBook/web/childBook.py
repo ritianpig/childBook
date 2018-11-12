@@ -262,55 +262,64 @@ def uploadfav():
         get_id = request.args.get('id')
         get_unionid = request.args.get('unionid')
 
-        res_fav = db.session.query(BookMessages).filter_by(book_id=get_id).first()
-        res_uf = db.session.query(user_favs).filter_by(user=get_unionid,book_id=get_id).first()
-        # 判断用户是否在用户数据库中
-        res_get_us = db.session.query(Users).filter_by(user=get_unionid).first()
-        if res_get_us:
-            # 判断用户收藏表是否有该条记录
-            if res_uf:
-                return 'ok2'
+        if get_unionid:
+            res_fav = db.session.query(BookMessages).filter_by(book_id=get_id).first()
+            res_uf = db.session.query(user_favs).filter_by(user=get_unionid,book_id=get_id).first()
+            # 判断用户是否在用户数据库中
+            res_get_us = db.session.query(Users).filter_by(user=get_unionid).first()
+            if res_get_us:
+                # 判断用户收藏表是否有该条记录
+                if res_uf:
+                    return 'ok2'
+                else:
+                    add_user_fav = user_favs(user=get_unionid,book_id=get_id)
+                    res_fav.fav += 1
+                    db.session.add(add_user_fav)
+                    db.session.commit()
+                    return 'ok'
             else:
-                add_user_fav = user_favs(user=get_unionid,book_id=get_id)
+                add_user = Users(user=get_unionid)
+                add_user_fav = user_favs(user=get_unionid, book_id=get_id)
                 res_fav.fav += 1
+                db.session.add(add_user)
                 db.session.add(add_user_fav)
                 db.session.commit()
                 return 'ok'
+
         else:
-            add_user = Users(user=get_unionid)
-            add_user_fav = user_favs(user=get_unionid, book_id=get_id)
-            res_fav.fav += 1
-            db.session.add(add_user)
-            db.session.add(add_user_fav)
-            db.session.commit()
-            return 'ok'
+            return 'unionid不能为空'
     else:
 
         get_id = request.args.get('id')
         get_unionid = request.args.get('unionid')
 
-        res_fav = db.session.query(BookMessages).filter_by(book_id=get_id).first()
-        res_uf = db.session.query(user_favs).filter_by(user=get_unionid, book_id=get_id).first()
-        # 判断用户是否在用户数据库中
-        res_get_us = db.session.query(Users).filter_by(user=get_unionid).first()
-        if res_get_us:
-            # 判断用户收藏表是否有该条记录
-            if res_uf:
-                return 'ok2'
+        if get_unionid:
+            res_fav = db.session.query(BookMessages).filter_by(book_id=get_id).first()
+            res_uf = db.session.query(user_favs).filter_by(user=get_unionid, book_id=get_id).first()
+            # 判断用户是否在用户数据库中
+            res_get_us = db.session.query(Users).filter_by(user=get_unionid).first()
+            if res_get_us:
+                # 判断用户收藏表是否有该条记录
+                if res_uf:
+                    return 'ok2'
+                else:
+                    add_user_fav = user_favs(user=get_unionid, book_id=get_id)
+                    res_fav.fav += 1
+                    db.session.add(add_user_fav)
+                    db.session.commit()
+                    return 'ok'
             else:
+                add_user = Users(user=get_unionid)
                 add_user_fav = user_favs(user=get_unionid, book_id=get_id)
                 res_fav.fav += 1
+                db.session.add(add_user)
                 db.session.add(add_user_fav)
                 db.session.commit()
                 return 'ok'
+
         else:
-            add_user = Users(user=get_unionid)
-            add_user_fav = user_favs(user=get_unionid, book_id=get_id)
-            res_fav.fav += 1
-            db.session.add(add_user)
-            db.session.add(add_user_fav)
-            db.session.commit()
-            return 'ok'
+            return 'unionid不能为空'
+
 
 @web.route('/getfav',methods=["GET","POST"])
 def getfav():
@@ -362,42 +371,48 @@ def sharebook():
         get_id = request.args.get('id')
         get_unionid = request.args.get('unionid')
 
-        # 判断依据是，首次用户分享表中没有数据给该用户加100金币，再次分享时，存在数据，则不再增加金币
-        res_users_coins = db.session.query(Users).filter_by(user=get_unionid).first()
-        # 判断用户分享表是否已经存在该数据
-        res_ushare = db.session.query(user_shares).filter_by(user=get_unionid,book_id=get_id).first()
-        if res_ushare:
-            res_ushare.share_times += 1
-            db.session.commit()
-            return 'ok2'
+        if get_unionid:
+            # 判断依据是，首次用户分享表中没有数据给该用户加100金币，再次分享时，存在数据，则不再增加金币
+            res_users_coins = db.session.query(Users).filter_by(user=get_unionid).first()
+            # 判断用户分享表是否已经存在该数据
+            res_ushare = db.session.query(user_shares).filter_by(user=get_unionid,book_id=get_id).first()
+            if res_ushare:
+                res_ushare.share_times += 1
+                db.session.commit()
+                return 'ok2'
+            else:
+                res_users_coins.coins += 100
+                add_ushare = user_shares(user=get_unionid,book_id=get_id,share_times=1)
+                db.session.add(add_ushare)
+                db.session.commit()
+                return 'ok'
+
         else:
-            res_users_coins.coins += 100
-            print(res_users_coins.coins)
-            add_ushare = user_shares(user=get_unionid,book_id=get_id,share_times=1)
-            db.session.add(add_ushare)
-            db.session.commit()
-            return 'ok'
+            return 'unionid不能为空'
 
     else:
 
         get_id = request.args.get('id')
         get_unionid = request.args.get('unionid')
 
-        # 判断依据是，首次用户分享表中没有数据给该用户加100金币，再次分享时，存在数据，则不再增加金币
-        res_users_coins = db.session.query(Users).filter_by(user=get_unionid).first()
-        # 判断用户分享表是否已经存在该数据
-        res_ushare = db.session.query(user_shares).filter_by(user=get_unionid, book_id=get_id).first()
-        if res_ushare:
-            res_ushare.share_times += 1
-            db.session.commit()
-            return 'ok2'
+        if get_unionid:
+            # 判断依据是，首次用户分享表中没有数据给该用户加100金币，再次分享时，存在数据，则不再增加金币
+            res_users_coins = db.session.query(Users).filter_by(user=get_unionid).first()
+            # 判断用户分享表是否已经存在该数据
+            res_ushare = db.session.query(user_shares).filter_by(user=get_unionid, book_id=get_id).first()
+            if res_ushare:
+                res_ushare.share_times += 1
+                db.session.commit()
+                return 'ok2'
+            else:
+                res_users_coins.coins += 100
+                add_ushare = user_shares(user=get_unionid, book_id=get_id, share_times=1)
+                db.session.add(add_ushare)
+                db.session.commit()
+                return 'ok'
+
         else:
-            res_users_coins.coins += 100
-            print(res_users_coins.coins)
-            add_ushare = user_shares(user=get_unionid, book_id=get_id, share_times=1)
-            db.session.add(add_ushare)
-            db.session.commit()
-            return 'ok'
+            return 'unionid不能为空'
 
 # 用户首次分享后获得此绘本图卡
 @web.route('/uploadsharebadge',methods=["GET","POST"])
