@@ -26,11 +26,14 @@ def gettoken():
 
         if 'unionid' in keys_list:
             unionid = resp2['unionid']
-            add_user = Users(user=unionid)
-            db.session.add(add_user)
-            db.session.commit()
-            results_dict['unionid'] = unionid
-
+            res_users = db.session.query(Users).filter_by(user=unionid).first()
+            if res_users:
+                results_dict['unionid'] = unionid
+            else:
+                add_user = Users(user=unionid)
+                db.session.add(add_user)
+                db.session.commit()
+                results_dict['unionid'] = unionid
             return jsonify(results_dict)
 
         else:
