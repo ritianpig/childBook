@@ -4,19 +4,75 @@ from models import db, BookMessages, BookBadges, BookClass, user_favs, user_shar
 import json
 import random
 from urllib import request as req
+from func.WXBizDataCrypt import WXBizDataCrypt
 
-@web.route('/gettoken',methods=["GET","POST"])
+
+@web.route('/gettoken', methods=["GET", "POST"])
 def gettoken():
     if request.method == "GET":
         results_dict = {}
 
-        get_appid = request.args.get('appid')
+        appId = request.args.get('appid')
         get_appsecret = request.args.get('secret')
         get_token = request.args.get('token')
+        encryptedData = request.args.get('encryptedData', type=str)
+        iv = request.args.get('iv')
 
         resp = req.urlopen("https://api.weixin.qq.com/sns/jscode2session?appid={}"
                            "&secret={}&js_code={}&grant_type=authorization_code".format
-                           (get_appid, get_appsecret, get_token))
+                           (appId, get_appsecret, get_token))
+        resp1 = resp.read().decode()
+        resp2 = json.loads(resp1)
+
+        keys_list = []
+        for k in resp2.keys():
+            keys_list.append(k)
+
+        # 判断是否存在unionid
+        if 'unionid' in keys_list:
+            unionid = resp2['unionid']
+            res_users = db.session.query(Users).filter_by(user=unionid).first()
+            if res_users:
+                results_dict['unionid'] = unionid
+            else:
+                add_user = Users(user=unionid)
+                db.session.add(add_user)
+                db.session.commit()
+                results_dict['unionid'] = unionid
+            return jsonify(results_dict)
+
+        # 当openid存在unionid不存在时需要解密获取unionid
+        if 'openid' in keys_list and 'unionid' not in keys_list:
+            sessionKey = resp2['session_key']
+            pc = WXBizDataCrypt(appId, sessionKey)
+            resPc = pc.decrypt(encryptedData, iv)
+            unionid = resPc['unionId']
+
+            res_users = db.session.query(Users).filter_by(user=unionid).first()
+            if res_users:
+                results_dict['unionid'] = unionid
+            else:
+                add_user = Users(user=unionid)
+                db.session.add(add_user)
+                db.session.commit()
+                results_dict['unionid'] = unionid
+            return jsonify(results_dict)
+        else:
+            return '或许参数输入有误，获取unionid失败'
+
+    else:
+
+        results_dict = {}
+
+        appId = request.args.get('appid')
+        get_appsecret = request.args.get('secret')
+        get_token = request.args.get('token')
+        encryptedData = request.args.get('encryptedData', type=str)
+        iv = request.args.get('iv')
+
+        resp = req.urlopen("https://api.weixin.qq.com/sns/jscode2session?appid={}"
+                           "&secret={}&js_code={}&grant_type=authorization_code".format
+                           (appId, get_appsecret, get_token))
         resp1 = resp.read().decode()
         resp2 = json.loads(resp1)
 
@@ -35,35 +91,20 @@ def gettoken():
                 db.session.commit()
                 results_dict['unionid'] = unionid
             return jsonify(results_dict)
+        if 'openid' in keys_list and 'unionid' not in keys_list:
+            sessionKey = resp2['session_key']
+            pc = WXBizDataCrypt(appId, sessionKey)
+            resPc = pc.decrypt(encryptedData, iv)
+            unionid = resPc['unionId']
 
-        else:
-            return '或许参数输入有误，获取unionid失败'
-
-    else:
-
-        results_dict = {}
-
-        get_appid = request.args.get('appid')
-        get_appsecret = request.args.get('secret')
-        get_token = request.args.get('token')
-
-        resp = req.urlopen("https://api.weixin.qq.com/sns/jscode2session?appid={}"
-                           "&secret={}&js_code={}&grant_type=authorization_code".format
-                           (get_appid, get_appsecret, get_token))
-        resp1 = resp.read().decode()
-        resp2 = json.loads(resp1)
-
-        keys_list = []
-        for k in resp2.keys():
-            keys_list.append(k)
-
-        if 'unionid' in keys_list:
-            unionid = resp2['unionid']
-            add_user = Users(user=unionid)
-            db.session.add(add_user)
-            db.session.commit()
-            results_dict['unionid'] = unionid
-
+            res_users = db.session.query(Users).filter_by(user=unionid).first()
+            if res_users:
+                results_dict['unionid'] = unionid
+            else:
+                add_user = Users(user=unionid)
+                db.session.add(add_user)
+                db.session.commit()
+                results_dict['unionid'] = unionid
             return jsonify(results_dict)
 
         else:
