@@ -1,11 +1,12 @@
-from flask import request,jsonify
+from flask import request,jsonify,current_app
 from . import web
 from models import db, BookMessages, BookBadges, BookClass, user_favs, user_shares, Testa, Scroll, Users, user_badges
 import json
 import random
 from urllib import request as req
 from func.WXBizDataCrypt import WXBizDataCrypt
-
+from datetime import datetime
+from flask_apscheduler import APScheduler
 
 @web.route('/gettoken', methods=["GET", "POST"])
 def gettoken():
@@ -28,17 +29,21 @@ def gettoken():
         for k in resp2.keys():
             keys_list.append(k)
 
+        print(resp2)
         # 判断是否存在unionid
         if 'unionid' in keys_list:
             unionid = resp2['unionid']
+            openid = resp2['openid']
             res_users = db.session.query(Users).filter_by(user=unionid).first()
             if res_users:
-                results_dict['unionid'] = unionid
+                res_users.openid = openid
+                db.session.commit()
+                results_dict.update(unionid=unionid, openid=openid)
             else:
-                add_user = Users(user=unionid)
+                add_user = Users(user=unionid,openid=openid)
                 db.session.add(add_user)
                 db.session.commit()
-                results_dict['unionid'] = unionid
+                results_dict.update(unionid=unionid, openid=openid)
             return jsonify(results_dict)
 
         # 当openid存在unionid不存在时需要解密获取unionid
@@ -47,15 +52,18 @@ def gettoken():
             pc = WXBizDataCrypt(appId, sessionKey)
             resPc = pc.decrypt(encryptedData, iv)
             unionid = resPc['unionId']
+            openid = resPc['openId']
 
             res_users = db.session.query(Users).filter_by(user=unionid).first()
             if res_users:
-                results_dict['unionid'] = unionid
+                res_users.openid = openid
+                db.session.commit()
+                results_dict.update(unionid=unionid, openid=openid)
             else:
-                add_user = Users(user=unionid)
+                add_user = Users(user=unionid,openid=openid)
                 db.session.add(add_user)
                 db.session.commit()
-                results_dict['unionid'] = unionid
+                results_dict.update(unionid=unionid, openid=openid)
             return jsonify(results_dict)
         else:
             return '或许参数输入有误，获取unionid失败'
@@ -80,33 +88,42 @@ def gettoken():
         for k in resp2.keys():
             keys_list.append(k)
 
+        print(resp2)
+        # 判断是否存在unionid
         if 'unionid' in keys_list:
             unionid = resp2['unionid']
+            openid = resp2['openid']
             res_users = db.session.query(Users).filter_by(user=unionid).first()
             if res_users:
-                results_dict['unionid'] = unionid
+                res_users.openid = openid
+                db.session.commit()
+                results_dict.update(unionid=unionid, openid=openid)
             else:
-                add_user = Users(user=unionid)
+                add_user = Users(user=unionid,openid=openid)
                 db.session.add(add_user)
                 db.session.commit()
-                results_dict['unionid'] = unionid
+                results_dict.update(unionid=unionid, openid=openid)
             return jsonify(results_dict)
+
+        # 当openid存在unionid不存在时需要解密获取unionid
         if 'openid' in keys_list and 'unionid' not in keys_list:
             sessionKey = resp2['session_key']
             pc = WXBizDataCrypt(appId, sessionKey)
             resPc = pc.decrypt(encryptedData, iv)
             unionid = resPc['unionId']
+            openid = resPc['openId']
 
             res_users = db.session.query(Users).filter_by(user=unionid).first()
             if res_users:
-                results_dict['unionid'] = unionid
+                res_users.openid = openid
+                db.session.commit()
+                results_dict.update(unionid=unionid, openid=openid)
             else:
-                add_user = Users(user=unionid)
+                add_user = Users(user=unionid,openid=openid)
                 db.session.add(add_user)
                 db.session.commit()
-                results_dict['unionid'] = unionid
+                results_dict.update(unionid=unionid, openid=openid)
             return jsonify(results_dict)
-
         else:
             return '或许参数输入有误，获取unionid失败'
 
@@ -659,3 +676,91 @@ def asd():
             db.session.commit()
 
         return 'ok'
+
+# 获取推送信息的必要信息
+# 获取推送信息的必要信息
+@web.route('/sendMs',methods=["GET","POST"])
+def getMs():
+    if request.method == "GET":
+        get_touser = request.args.get('touser')
+        get_form_id = request.args.get('form_id')
+        get_login_time = request.args.get('firstTime')
+
+        res_user = db.session.query(Users).filter_by(openid=get_touser).first()
+        res_user.form_id = get_form_id
+        res_user.login_time = get_login_time
+        db.session.commit()
+        return 'ok!!!'
+
+    else:
+        get_touser = request.args.get('touser')
+        get_form_id = request.args.get('form_id')
+        get_login_time = request.args.get('firstTime')
+
+        res_user = db.session.query(Users).filter_by(openid=get_touser).first()
+        res_user.form_id = get_form_id
+        res_user.login_time = get_login_time
+        db.session.commit()
+        return 'ok!'
+
+from childBook import creat_app
+app = creat_app()
+def add_job():
+    ctx = app.app_context()
+    ctx.push()
+    get_token = req.urlopen("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential"
+                            "&appid=wxdfb3be4199fc3a86&secret=2993fc0bd4c104a13ed23fbd669c9d07").read().decode()
+
+    token = json.loads(get_token)
+    access_token = token['access_token']
+
+    print(access_token)
+    # 查询出数据库中满足条件的用户
+
+    print(current_app.name)
+    res_users = db.session.query(Users).all()
+    nowtime = datetime.now()
+
+    # 取出满足条件的用户组成列表
+    user_list = []
+    for res_user in res_users:
+        if abs(nowtime - res_user.login_time).days == 1:
+            user_list.append(res_user)
+        else:
+            pass
+    print(user_list)
+
+    # 遍历满足条件用户列表，将数据传入url
+    for user in user_list:
+        datas = {
+            'access_token': access_token,
+            'touser': user.openid,
+            'form_id': user.form_id,
+            'template_id': "4yHrl4sKGGVcnhiKM5Sho7RqPZHV32cfKPHdKqtWd3M",
+            'page': "pages/index/index"
+        }
+        # 微信要求json格式传入数据
+        data = json.dumps(datas).encode()
+        url = "https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token={}".format(access_token)
+        headers = {'Content-Type': 'application/json'}
+        resp = req.Request(url=url, data=data, headers=headers)
+        response = req.urlopen(resp)
+    return 'ok'
+
+# 定时任务函数
+def timeTask():
+    job = {
+        'id': 'timeTask_send',
+        'func': 'add_job',
+    }
+
+    # 创建循环任务，开始于2018-11-19 晚上８点，每隔24小时执行一次，也就是此后每天晚上8点执行一次
+    result = current_app.apscheduler.add_job(func=__name__ + ':' + job['func'], id=job['id'], trigger='interval',
+                                             hours=24, start_date='2018-11-19 20:00')
+    print(result)
+    return '定时任务创建成功'
+
+# 启动定时任务视图
+@web.route('/timed',methods=["GET","POST"])
+def co():
+    return timeTask()

@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from datetime import datetime
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -43,6 +44,9 @@ class Users(db.Model):
     user = db.Column(db.String(200))
     isVip = db.Column(db.String(5),default='0')
     coins = db.Column(db.Integer,default=0)
+    form_id = db.Column(db.String(200))
+    login_time = db.Column(db.DateTime,default=datetime.now())
+    openid = db.Column(db.String(200))
 
 # 用户收藏表
 class user_favs(db.Model):
