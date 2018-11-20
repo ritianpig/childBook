@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d4514208-e3bf-485e-a3f9-24cc81210dc5" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/childBook/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/childBook/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/childBook/web/childBook.py" beforeDir="false" afterPath="$PROJECT_DIR$/childBook/web/childBook.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -35,6 +32,9 @@
     <expand />
     <select />
   </component>
+  <component name="FavoritesManager">
+    <favorites_list name="childBook" />
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
       <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
@@ -46,11 +46,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="childBook.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="childBook.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/childBook/web/childBook.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="375">
-              <caret line="762" column="10" selection-start-line="762" selection-start-column="10" selection-end-line="762" selection-end-column="10" />
+            <state relative-caret-position="447">
+              <caret line="784" lean-forward="true" selection-start-line="784" selection-end-line="784" />
               <folding>
                 <element signature="e#0#45#0" expanded="true" />
               </folding>
@@ -58,11 +58,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="models.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/models.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-201">
-              <caret line="47" column="62" selection-start-line="47" selection-start-column="62" selection-end-line="47" selection-end-column="62" />
+            <state relative-caret-position="900">
+              <caret line="50" column="33" lean-forward="true" selection-start-line="49" selection-start-column="4" selection-end-line="50" selection-end-column="37" />
               <folding>
                 <element signature="e#0#39#0" expanded="true" />
               </folding>
@@ -98,8 +98,8 @@
         <option value="$PROJECT_DIR$/config.py" />
         <option value="$PROJECT_DIR$/app.py" />
         <option value="$PROJECT_DIR$/childBook/__init__.py" />
-        <option value="$PROJECT_DIR$/models.py" />
         <option value="$PROJECT_DIR$/da.py" />
+        <option value="$PROJECT_DIR$/models.py" />
         <option value="$PROJECT_DIR$/childBook/web/childBook.py" />
       </list>
     </option>
@@ -130,11 +130,6 @@
           <expand>
             <path>
               <item name="childBook" type="b2602c69:ProjectViewProjectNode" />
-              <item name="childBook" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="childBook" type="b2602c69:ProjectViewProjectNode" />
-              <item name="childBook" type="462c0819:PsiDirectoryNode" />
               <item name="childBook" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
@@ -274,6 +269,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="52" y="-11" width="1315" height="780" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32841328" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
@@ -281,13 +277,13 @@
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.32840723" />
       <window_info anchor="bottom" id="Python Console" order="11" weight="0.32512316" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.23973727" />
-      <window_info anchor="bottom" id="Terminal" order="12" weight="0.3316913" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16388226" />
+      <window_info anchor="bottom" id="Terminal" order="12" weight="0.30213463" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49917898" weight="0.16388226" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="3" weight="0.3293556" />
       <window_info anchor="right" id="SciView" order="4" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info id="Favorites" order="2" sideWeight="0.500821" side_tool="true" weight="0.16388226" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -299,26 +295,26 @@
     </layout>
     <layout-to-restore>
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49917898" visible="true" weight="0.16388226" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.1575179" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32840723" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" id="SciView" order="4" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32841328" />
-      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32840723" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3234811" />
+      <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.23973727" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Python Console" order="11" weight="0.32512316" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="right" id="Database" order="3" weight="0.3293556" />
-      <window_info anchor="bottom" id="Terminal" order="12" weight="0.3316913" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="12" visible="true" weight="0.30213463" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
-      <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="right" id="SciView" order="4" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info id="Favorites" order="2" sideWeight="0.500821" side_tool="true" weight="0.16388226" />
     </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -593,13 +589,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/lib/python3.5/json/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="32">
-          <caret line="318" selection-start-line="318" selection-end-line="318" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.virtualenvs/sayhello-YN11uALW/lib/python3.5/site-packages/flask/app.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="61">
@@ -670,16 +659,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/childBook/web/childBook.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="762" column="10" selection-start-line="762" selection-start-column="10" selection-end-line="762" selection-end-column="10" />
-          <folding>
-            <element signature="e#0#45#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/da.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
@@ -689,10 +668,27 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/models.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-201">
-          <caret line="47" column="62" selection-start-line="47" selection-start-column="62" selection-end-line="47" selection-end-column="62" />
+        <state relative-caret-position="900">
+          <caret line="50" column="33" lean-forward="true" selection-start-line="49" selection-start-column="4" selection-end-line="50" selection-end-column="37" />
           <folding>
             <element signature="e#0#39#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.5/json/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-22">
+          <caret line="181" column="4" selection-start-line="181" selection-start-column="4" selection-end-line="181" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/childBook/web/childBook.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="447">
+          <caret line="784" lean-forward="true" selection-start-line="784" selection-end-line="784" />
+          <folding>
+            <element signature="e#0#45#0" expanded="true" />
           </folding>
         </state>
       </provider>

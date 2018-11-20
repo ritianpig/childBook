@@ -47,6 +47,8 @@ class Users(db.Model):
     form_id = db.Column(db.String(200))
     login_time = db.Column(db.DateTime,default=datetime.now())
     openid = db.Column(db.String(200))
+    bookId = db.Column(db.String(100))
+    title = db.Column(db.String(100))
 
 # 用户收藏表
 class user_favs(db.Model):

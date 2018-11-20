@@ -6,7 +6,6 @@ import random
 from urllib import request as req
 from func.WXBizDataCrypt import WXBizDataCrypt
 from datetime import datetime
-from flask_apscheduler import APScheduler
 
 @web.route('/gettoken', methods=["GET", "POST"])
 def gettoken():
@@ -16,8 +15,8 @@ def gettoken():
         appId = request.args.get('appid')
         get_appsecret = request.args.get('secret')
         get_token = request.args.get('token')
-        encryptedData = request.args.get('encryptedData', type=str)
-        iv = request.args.get('iv')
+        encryptedData = request.args.get('encryptedData', type=str).replace('%2B','+')
+        iv = request.args.get('iv').replace('%2B','+')
 
         resp = req.urlopen("https://api.weixin.qq.com/sns/jscode2session?appid={}"
                            "&secret={}&js_code={}&grant_type=authorization_code".format
@@ -29,7 +28,6 @@ def gettoken():
         for k in resp2.keys():
             keys_list.append(k)
 
-        print(resp2)
         # 判断是否存在unionid
         if 'unionid' in keys_list:
             unionid = resp2['unionid']
@@ -678,17 +676,20 @@ def asd():
         return 'ok'
 
 # 获取推送信息的必要信息
-# 获取推送信息的必要信息
 @web.route('/sendMs',methods=["GET","POST"])
 def getMs():
     if request.method == "GET":
         get_touser = request.args.get('touser')
         get_form_id = request.args.get('form_id')
         get_login_time = request.args.get('firstTime')
+        get_bookId = request.args.get('bookId')
+        get_title = request.args.get('title')
 
         res_user = db.session.query(Users).filter_by(openid=get_touser).first()
         res_user.form_id = get_form_id
         res_user.login_time = get_login_time
+        res_user.bookId = get_bookId
+        res_user.title = get_title
         db.session.commit()
         return 'ok!!!'
 
@@ -696,10 +697,14 @@ def getMs():
         get_touser = request.args.get('touser')
         get_form_id = request.args.get('form_id')
         get_login_time = request.args.get('firstTime')
+        get_bookId = request.args.get('bookId')
+        get_title = request.args.get('title')
 
         res_user = db.session.query(Users).filter_by(openid=get_touser).first()
         res_user.form_id = get_form_id
         res_user.login_time = get_login_time
+        res_user.bookId = get_bookId
+        res_user.title = get_title
         db.session.commit()
         return 'ok!'
 
@@ -732,12 +737,24 @@ def add_job():
 
     # 遍历满足条件用户列表，将数据传入url
     for user in user_list:
+        page = 'pages/index/index?id={}&ismodel=1'.format(user.bookId)
         datas = {
             'access_token': access_token,
             'touser': user.openid,
             'form_id': user.form_id,
             'template_id': "4yHrl4sKGGVcnhiKM5Sho7RqPZHV32cfKPHdKqtWd3M",
-            'page': "pages/index/index"
+            'page': page,
+            'data': {
+                'keyword1': {
+                    'value': '完整阅读绘本'
+                },
+                'keyword2': {
+                    'value': '阅读《{}》'.format(user.title)
+                },
+                'keyword3': {
+                    'value': '您的绘本还没有阅读完成噢！'
+                }
+            }
         }
         # 微信要求json格式传入数据
         data = json.dumps(datas).encode()
@@ -745,6 +762,7 @@ def add_job():
         headers = {'Content-Type': 'application/json'}
         resp = req.Request(url=url, data=data, headers=headers)
         response = req.urlopen(resp)
+
     return 'ok'
 
 # 定时任务函数
@@ -756,7 +774,7 @@ def timeTask():
 
     # 创建循环任务，开始于2018-11-19 晚上８点，每隔24小时执行一次，也就是此后每天晚上8点执行一次
     result = current_app.apscheduler.add_job(func=__name__ + ':' + job['func'], id=job['id'], trigger='interval',
-                                             hours=24, start_date='2018-11-19 20:00')
+                                             minutes=10, start_date='2018-11-20 15:10')
     print(result)
     return '定时任务创建成功'
 
