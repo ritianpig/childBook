@@ -1,8 +1,8 @@
 from flask import request,jsonify,current_app
 from . import web
-from models import db, BookMessages, BookBadges, BookClass, user_favs, user_shares, Testa, Scroll, Users, user_badges
-import json
-import random
+from models import db, BookMessages, BookBadges, BookClass, user_favs,\
+    user_shares, Testa, Scroll, Users, user_badges,User_order
+import json ,random ,hashlib,string,xmltodict,time
 from urllib import request as req
 from func.WXBizDataCrypt import WXBizDataCrypt
 from datetime import datetime
@@ -254,11 +254,14 @@ def getbook():
         res_uf = db.session.query(user_favs).filter_by(user=get_unionid,book_id=get_id).first()
         res_us = db.session.query(user_shares).filter_by(user=get_unionid,book_id=get_id).first()
         results_dict['recommends'] = recommends
-        dict_BM = res_BM.to_json()
-        del dict_BM['id']
-        # 解析json
-        dict_BM['pages'] = json.loads(dict_BM['pages'])
-        results_dict.update(dict_BM)
+        if res_BM:
+            dict_BM = res_BM.to_json()
+            del dict_BM['id']
+            # 解析json
+            dict_BM['pages'] = json.loads(dict_BM['pages'])
+            results_dict.update(dict_BM)
+        else:
+            return '输入id错误，数据不存在'
 
         # 判断该绘本用户是否收藏
         if res_uf:
@@ -521,17 +524,20 @@ def getbadge():
         res_user_badges = db.session.query(user_badges).filter_by(user=get_unionid,book_id=get_id).all()
         # 根据book_id查找图卡所有信息
         res_badges = db.session.query(BookBadges).filter_by(book_id=get_id).first()
-        badges_list = json.loads(res_badges.badges)
+        if res_badges:
+            badges_list = json.loads(res_badges.badges)
 
-        for x in badges_list:
-            # 给own赋初始值
-            x['own'] = '0'
-            for res_user_badge in res_user_badges:
-                # 当用户绘本中有该系图卡下面的图卡时，own=1
-                if res_user_badge.badge_id in x.values():
-                    x['own'] = '1'
-        results_dict = dict(book_id=get_id,url=res_badges.url,badges=badges_list)
-        return jsonify(results_dict)
+            for x in badges_list:
+                # 给own赋初始值
+                x['own'] = '0'
+                for res_user_badge in res_user_badges:
+                    # 当用户绘本中有该系图卡下面的图卡时，own=1
+                    if res_user_badge.badge_id in x.values():
+                        x['own'] = '1'
+            results_dict = dict(book_id=get_id,url=res_badges.url,badges=badges_list)
+            return jsonify(results_dict)
+        else:
+            return 'id 输入错误，没有该book_id'
 
     else:
 
@@ -782,3 +788,80 @@ def timeTask():
 @web.route('/timed',methods=["GET","POST"])
 def co():
     return timeTask()
+
+
+@web.route('/user_buy',methods=["GET","POST"])
+def user_buy():
+    if request.method == "GET":
+        get_openid = request.args.get('openid')
+        get_price = request.args.get('total_fee', type=int)
+        get_user = request.args.get('unionid')
+        timeNow = str(int(time.time()))
+        user_ip = request.remote_addr
+        add_user = User_order(openid=get_openid,user=get_user,timestamp=timeNow)
+        db.session.add(add_user)
+        db.session.commit()
+        # 生成随机32位随机字符串
+        nonce_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
+        # 利用时间加随机字符串来生成订单号
+        trade_time = str(datetime.now()).replace('-', '').replace(':', '').replace(' ', '').replace('.', '')
+        # 取随机6个字符串，拼接到时间后面
+        trade_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
+        # 生成订单号
+        out_trade_no = trade_time + trade_str
+        print(out_trade_no)
+        sign_list = ['appid=wxdfb3be4199fc3a86', 'mch_id=1518791341', 'nonce_str=%s' % nonce_str,
+                     'body=狐涂涂儿童英语绘本-游戏充值', 'out_trade_no=%s' % out_trade_no, 'total_fee=%s' % get_price,
+                     'spbill_create_ip=%s' % user_ip, 'notify_url=https://xcx.51babyapp.com/zy9/notice',
+                     'trade_type=JSAPI', 'openid=%s' % get_openid]
+        sign_list.sort()
+        join_sign = '&'.join(sign_list) + "&key=FMSDAgRDrM3XnaDmeRXN7g5mkBOPuM4a"
+        sign = hashlib.md5(join_sign.encode('utf-8')).hexdigest().upper()
+        print(sign)
+        datas = """
+                <xml>
+                    <appid>wxdfb3be4199fc3a86</appid>
+                    <mch_id>1518791341</mch_id>
+                    <nonce_str>{}</nonce_str>
+                    <sign>{}</sign>
+                    <body>狐涂涂儿童英语绘本-游戏充值</body>
+                    <out_trade_no>{}</out_trade_no>
+                    <total_fee>{}</total_fee>
+                    <spbill_create_ip>{}</spbill_create_ip>
+                    <notify_url>https://xcx.51babyapp.com/zy9/notice</notify_url>
+                    <trade_type>JSAPI</trade_type>
+                    <openid>{}</openid>
+                    </xml>
+                """.format(nonce_str,sign,out_trade_no,get_price,user_ip,get_openid).encode()
+        url = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
+        headers = {'Content-Type': 'text/xml'}
+        resp = req.Request(url=url, data=datas, headers=headers)
+        res_response = req.urlopen(resp).read().decode()
+        res_result = xmltodict.parse(res_response)
+
+        result = {}
+        pnonceStr = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
+        if res_result['xml']['prepay_id']:
+            prepay_id = res_result['xml']['prepay_id']
+            mdList = ['appid=wxdfb3be4199fc3a86','nonceStr=%s' %pnonceStr,
+                      'package=prepay_id=%s' %prepay_id,'signType=MD5',
+                      'timeStamp=%s' %timeNow]
+            mdList.sort()
+            mdsign = '&'.join(mdList) + '&key=FMSDAgRDrM3XnaDmeRXN7g5mkBOPuM4a'
+            ppaySign = hashlib.md5(mdsign.encode('utf-8')).hexdigest().upper()
+
+            result.update(signType='MD5',package='prepay_id=' + prepay_id,
+                          nonceStr=pnonceStr,timeStamp=timeNow,paySign=ppaySign)
+        else:
+            return 'prepay_id 获取失败'
+        return jsonify(result)
+
+
+@web.route('/notice',methods=["GET","POST"])
+def notice():
+    if request.method == "GET":
+        return '换个请求方式'
+    else:
+        data = request.data
+        print(data)
+

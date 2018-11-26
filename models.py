@@ -84,3 +84,9 @@ class Testa(db.Model):
         if "_sa_instance_state" in dict:
             del dict["_sa_instance_state"]
         return dict
+
+class User_order(db.Model):
+    id = db.Column(db.Integer,primary_key=True)
+    user = db.Column(db.String(200))
+    openid = db.Column(db.String(200))
+    timestamp  =db.Column(db.String(100))
