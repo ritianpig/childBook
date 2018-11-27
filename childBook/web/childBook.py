@@ -1,7 +1,7 @@
 from flask import request,jsonify,current_app
 from . import web
 from models import db, BookMessages, BookBadges, BookClass, user_favs,\
-    user_shares, Testa, Scroll, Users, user_badges,User_order
+    user_shares, Testa, Scroll, Users, user_badges,User_order,User_signIn
 import json ,random ,hashlib,string,xmltodict,time
 from urllib import request as req
 from func.WXBizDataCrypt import WXBizDataCrypt
@@ -862,6 +862,68 @@ def notice():
     if request.method == "GET":
         return '换个请求方式'
     else:
-        data = request.data
-        print(data)
+        data = request.data.decode('utf-8')
+        if data:
+            result = json.loads(xmltodict.parse(data))
+            return result
+        else:
+            return '返回结果None'
+
+@web.route('/signIn',methods=["GET","POST"])
+def signIn():
+    if request.method == "GET":
+        get_unionid = request.args.get('unionid')
+        get_addcoins = request.args.get('addcoins',type=int)
+
+        # 创建字典，isSign为１时表示用户当天已经签到，为0表示没签到
+        result = {}
+        timeNow = datetime.now()
+
+        # 判断用户是否有签到记录：
+        res_User_signIn = db.session.query(User_signIn).filter_by(user=get_unionid).first()
+        res_Users = db.session.query(Users).filter_by(user=get_unionid).first()
+        if res_User_signIn:
+            # 判断是否当天有过签到记录
+            if abs(timeNow - res_User_signIn.signTime).days < 1:
+                result['isSignIn'] = '1'
+            # 判断签到是否已经达到20天上限
+            elif res_User_signIn.days == 20:
+                res_User_signIn.signTime = timeNow
+                res_User_signIn.days = 1
+                res_Users.coins += get_addcoins
+                db.session.commit()
+                result.update(isSignIn='0',days='20')
+            # 当天没签到，连续签到不超过20天
+            else:
+                result.update(isSignIn='0', days=str(res_User_signIn.days))
+                res_User_signIn.signTime = timeNow
+                res_User_signIn.days += 1
+                res_Users.coins += get_addcoins
+                db.session.commit()
+        # 用户没有签到记录
+        else:
+            add_user = res_User_signIn(user=get_unionid,signTime=timeNow,days=1)
+            db.session.add(add_user)
+            res_Users.coins += get_addcoins
+            db.session.commit()
+            result.update(isSignIn='0',days='1')
+
+        return jsonify(result)
+
+# 当前签到板所在位置
+@web.route('/location',methods=["GET","POST"])
+def location():
+    if request.method == "GET":
+        get_unionid = request.args.get('unionid')
+
+        res_User_signIn = db.session.query(User_signIn).filter_by(user=get_unionid).first()
+        # 返回用户当前位置字典，当用户数据存在读取数据库数据，不存在那就返回１
+        result = {}
+        if res_User_signIn:
+            result['days'] = str(res_User_signIn.days)
+        else:
+            result['days'] = '1'
+
+        return jsonify(result)
+
 

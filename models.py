@@ -90,3 +90,9 @@ class User_order(db.Model):
     user = db.Column(db.String(200))
     openid = db.Column(db.String(200))
     timestamp  =db.Column(db.String(100))
+
+class User_signIn(db.Model):
+    id = db.Column(db.Integer,primary_key=True)
+    user = db.Column(db.String(200))
+    signTime = db.Column(db.DateTime)
+    days = db.Column(db.Integer)
