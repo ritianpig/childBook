@@ -1,8 +1,7 @@
 from flask import request,jsonify,current_app
 from . import web
-from models import db, BookMessages, BookBadges, BookClass, user_favs,\
-    user_shares, Testa, Scroll, Users, user_badges,User_order,User_signIn
-import json ,random ,hashlib,string,xmltodict,time
+from models import db, BookMessages, BookBadges, BookClass, user_favs, user_shares, Testa, Scroll, Users, user_badges,User_order,User_signIn
+import random,json,hashlib,string,xmltodict,time
 from urllib import request as req
 from func.WXBizDataCrypt import WXBizDataCrypt
 from datetime import datetime
@@ -86,7 +85,6 @@ def gettoken():
         for k in resp2.keys():
             keys_list.append(k)
 
-        print(resp2)
         # 判断是否存在unionid
         if 'unionid' in keys_list:
             unionid = resp2['unionid']
@@ -254,6 +252,7 @@ def getbook():
         res_uf = db.session.query(user_favs).filter_by(user=get_unionid,book_id=get_id).first()
         res_us = db.session.query(user_shares).filter_by(user=get_unionid,book_id=get_id).first()
         results_dict['recommends'] = recommends
+
         if res_BM:
             dict_BM = res_BM.to_json()
             del dict_BM['id']
@@ -261,7 +260,7 @@ def getbook():
             dict_BM['pages'] = json.loads(dict_BM['pages'])
             results_dict.update(dict_BM)
         else:
-            return '输入id错误，数据不存在'
+            return 'id输入错误,没有该book_id'
 
         # 判断该绘本用户是否收藏
         if res_uf:
@@ -524,20 +523,17 @@ def getbadge():
         res_user_badges = db.session.query(user_badges).filter_by(user=get_unionid,book_id=get_id).all()
         # 根据book_id查找图卡所有信息
         res_badges = db.session.query(BookBadges).filter_by(book_id=get_id).first()
-        if res_badges:
-            badges_list = json.loads(res_badges.badges)
+        badges_list = json.loads(res_badges.badges)
 
-            for x in badges_list:
-                # 给own赋初始值
-                x['own'] = '0'
-                for res_user_badge in res_user_badges:
-                    # 当用户绘本中有该系图卡下面的图卡时，own=1
-                    if res_user_badge.badge_id in x.values():
-                        x['own'] = '1'
-            results_dict = dict(book_id=get_id,url=res_badges.url,badges=badges_list)
-            return jsonify(results_dict)
-        else:
-            return 'id 输入错误，没有该book_id'
+        for x in badges_list:
+            # 给own赋初始值
+            x['own'] = '0'
+            for res_user_badge in res_user_badges:
+                # 当用户绘本中有该系图卡下面的图卡时，own=1
+                if res_user_badge.badge_id in x.values():
+                    x['own'] = '1'
+        results_dict = dict(book_id=get_id,url=res_badges.url,badges=badges_list)
+        return jsonify(results_dict)
 
     else:
 
@@ -780,7 +776,7 @@ def timeTask():
 
     # 创建循环任务，开始于2018-11-19 晚上８点，每隔24小时执行一次，也就是此后每天晚上8点执行一次
     result = current_app.apscheduler.add_job(func=__name__ + ':' + job['func'], id=job['id'], trigger='interval',
-                                             minutes=10, start_date='2018-11-20 15:10')
+                                             hours=24, start_date='2018-11-28 20:00')
     print(result)
     return '定时任务创建成功'
 
@@ -789,35 +785,31 @@ def timeTask():
 def co():
     return timeTask()
 
-
 @web.route('/user_buy',methods=["GET","POST"])
 def user_buy():
     if request.method == "GET":
         get_openid = request.args.get('openid')
-        get_price = request.args.get('total_fee', type=int)
+        get_price = request.args.get('total_fee',type=int)
+        user_ip = request.remote_addr
+        
         get_user = request.args.get('unionid')
         timeNow = str(int(time.time()))
-        user_ip = request.remote_addr
-        add_user = User_order(openid=get_openid,user=get_user,timestamp=timeNow)
-        db.session.add(add_user)
-        db.session.commit()
+
         # 生成随机32位随机字符串
         nonce_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
         # 利用时间加随机字符串来生成订单号
-        trade_time = str(datetime.now()).replace('-', '').replace(':', '').replace(' ', '').replace('.', '')
+        trade_time = str(datetime.now()).replace('-','').replace(':','').replace(' ','').replace('.','')
         # 取随机6个字符串，拼接到时间后面
         trade_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
         # 生成订单号
         out_trade_no = trade_time + trade_str
-        print(out_trade_no)
-        sign_list = ['appid=wxdfb3be4199fc3a86', 'mch_id=1518791341', 'nonce_str=%s' % nonce_str,
-                     'body=狐涂涂儿童英语绘本-游戏充值', 'out_trade_no=%s' % out_trade_no, 'total_fee=%s' % get_price,
-                     'spbill_create_ip=%s' % user_ip, 'notify_url=https://xcx.51babyapp.com/zy9/notice',
-                     'trade_type=JSAPI', 'openid=%s' % get_openid]
+        sign_list = ['appid=wxdfb3be4199fc3a86','mch_id=1518791341','nonce_str=%s' %nonce_str,
+                     'body=狐涂涂儿童英语绘本-游戏充值','out_trade_no=%s' %out_trade_no,'total_fee=%s' %get_price,
+                     'spbill_create_ip=%s' %user_ip,'notify_url=https://xcx.51babyapp.com/zy9/notice',
+                     'trade_type=JSAPI','openid=%s' %get_openid]
         sign_list.sort()
         join_sign = '&'.join(sign_list) + "&key=FMSDAgRDrM3XnaDmeRXN7g5mkBOPuM4a"
         sign = hashlib.md5(join_sign.encode('utf-8')).hexdigest().upper()
-        print(sign)
         datas = """
                 <xml>
                     <appid>wxdfb3be4199fc3a86</appid>
@@ -838,12 +830,12 @@ def user_buy():
         resp = req.Request(url=url, data=datas, headers=headers)
         res_response = req.urlopen(resp).read().decode()
         res_result = xmltodict.parse(res_response)
-
+        
         result = {}
         pnonceStr = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
         if res_result['xml']['prepay_id']:
             prepay_id = res_result['xml']['prepay_id']
-            mdList = ['appid=wxdfb3be4199fc3a86','nonceStr=%s' %pnonceStr,
+            mdList = ['appId=wxdfb3be4199fc3a86','nonceStr=%s' %pnonceStr,
                       'package=prepay_id=%s' %prepay_id,'signType=MD5',
                       'timeStamp=%s' %timeNow]
             mdList.sort()
@@ -856,19 +848,40 @@ def user_buy():
             return 'prepay_id 获取失败'
         return jsonify(result)
 
-
+# 微信支付结果通知
 @web.route('/notice',methods=["GET","POST"])
 def notice():
     if request.method == "GET":
         return '换个请求方式'
     else:
-        data = request.data.decode('utf-8')
-        if data:
-            result = json.loads(xmltodict.parse(data))
+        data = request.data
+        res_data = xmltodict.parse(data)
+        if res_data['xml']['return_code'] == 'SUCCESS':
+            result ='''
+                    <xml>
+                    <return_code><![CDATA[SUCCESS]]></return_code>
+                    </xml>
+                    '''
+            get_openid = res_data['xml']['openid']
+            get_out_trade_no = res_data['xml']['out_trade_no']
+            get_result_code = res_data['xml']['result_code']
+            get_time_end = res_data['xml']['time_end']
+            get_total_fee = str(res_data['xml']['total_fee'])
+            add_user = User_order(openid=get_openid,out_trade_no=get_out_trade_no,
+                                  result_code=get_result_code,time_end=get_time_end,
+                                  total_fee=get_total_fee)
+            db.session.add(add_user)
+            db.session.commit()
             return result
         else:
-            return '返回结果None'
+            result ='''
+                    <xml>
+                    <return_code><![CDATA[FAIL]]></return_code>
+                    </xml>
+                    '''
+            return result
 
+#　绘本签到模块
 @web.route('/signIn',methods=["GET","POST"])
 def signIn():
     if request.method == "GET":
@@ -883,31 +896,22 @@ def signIn():
         res_User_signIn = db.session.query(User_signIn).filter_by(user=get_unionid).first()
         res_Users = db.session.query(Users).filter_by(user=get_unionid).first()
         if res_User_signIn:
-            # 判断是否当天有过签到记录
-            if abs(timeNow - res_User_signIn.signTime).days < 1:
-                result['isSignIn'] = '1'
             # 判断签到是否已经达到20天上限
-            elif res_User_signIn.days == 20:
+            if res_User_signIn.days > 20:
                 res_User_signIn.signTime = timeNow
                 res_User_signIn.days = 1
+                res_User_signIn.days2 += 1
                 res_Users.coins += get_addcoins
                 db.session.commit()
-                result.update(isSignIn='0',days='20')
+                result['days'] = '1'
             # 当天没签到，连续签到不超过20天
             else:
-                result.update(isSignIn='0', days=str(res_User_signIn.days))
+                result['days']=str(res_User_signIn.days)
                 res_User_signIn.signTime = timeNow
                 res_User_signIn.days += 1
+                res_User_signIn.days2 += 1
                 res_Users.coins += get_addcoins
                 db.session.commit()
-        # 用户没有签到记录
-        else:
-            add_user = res_User_signIn(user=get_unionid,signTime=timeNow,days=1)
-            db.session.add(add_user)
-            res_Users.coins += get_addcoins
-            db.session.commit()
-            result.update(isSignIn='0',days='1')
-
         return jsonify(result)
 
 # 当前签到板所在位置
@@ -916,14 +920,36 @@ def location():
     if request.method == "GET":
         get_unionid = request.args.get('unionid')
 
+        timeNow = datetime.now().date()
+        result = {}
         res_User_signIn = db.session.query(User_signIn).filter_by(user=get_unionid).first()
         # 返回用户当前位置字典，当用户数据存在读取数据库数据，不存在那就返回１
-        result = {}
         if res_User_signIn:
-            result['days'] = str(res_User_signIn.days)
+            if abs(timeNow - res_User_signIn.signTime).days == 0:
+                if res_User_signIn.days >20:
+                    if res_User_signIn.days2 == 0:
+                        result.update(isSignIn='0',days='20')
+                    else:
+                        result.update(isSignIn='1', days='20')
+                elif res_User_signIn.days ==1:
+                    if res_User_signIn.days2 == 0:
+                        result.update(isSignIn='0',days='1')
+                    else:
+                        result.update(isSignIn='1', days='1')
+
+                else:
+                    if  res_User_signIn.days2 == 0:
+                        result.update(isSignIn='0',days=str(res_User_signIn.days-1))
+                    else:
+                        result.update(isSignIn='1', days=str(res_User_signIn.days - 1))
+            elif res_User_signIn.days >20:
+                result.update(isSignIn='0',days='1')
+            else:
+                result.update(isSignIn='0',days=str(res_User_signIn.days))
         else:
-            result['days'] = '1'
+            add_user = User_signIn(user=get_unionid,days=1,days2=0,signTime=timeNow)
+            db.session.add(add_user)
+            db.session.commit()
+            result.update(isSignIn='0',days='1')
 
         return jsonify(result)
-
-

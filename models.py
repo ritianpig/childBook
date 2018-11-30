@@ -85,14 +85,22 @@ class Testa(db.Model):
             del dict["_sa_instance_state"]
         return dict
 
+# 用户订单
 class User_order(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     user = db.Column(db.String(200))
     openid = db.Column(db.String(200))
-    timestamp  =db.Column(db.String(100))
+    order_name = db.Column(db.String(100))
+    out_trade_no = db.Column(db.String(100))
+    result_code = db.Column(db.String(10))
+    total_fee = db.Column(db.String(10))
+    time_end = db.Column(db.String(30))
 
+# 用户签到记录
 class User_signIn(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     user = db.Column(db.String(200))
     signTime = db.Column(db.DateTime)
     days = db.Column(db.Integer)
+    days2 = db.Column(db.Integer)
+
